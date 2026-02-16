@@ -1,0 +1,14 @@
+{
+  "name": "taobao-skill",
+  "version": "1.0.0",
+  "description": "Taobao/Tmall product scraping skill using Chrome DevTools MCP. Dynamically navigates and extracts product data with AI-driven adaptation to page variations.",
+  "author": {
+    "name": "Jeremy Dong"
+  },
+  "dependencies": {
+    "mcp": ["chrome-devtools"]
+  },
+  "commands": {
+    "taobao-scrape": "Scrape a Taobao/Tmall product: login, navigate, extract all data"
+  }
+}
