@@ -373,9 +373,42 @@ See `references/taobao-page-structure.md` for full CSS selectors, JS data paths,
 
 ---
 
-## Layer 4: Output Format
+## Layer 4: Output & Storage
 
-Present results as structured data:
+### Save to JSON
+
+After extraction, save the full data to a JSON file using the `Write` tool:
+
+- **Path**: `{current_working_directory}/taobao-products/{product_id}.json`
+- **Create the `taobao-products/` directory** if it doesn't exist (use Bash `mkdir -p`)
+- **File name**: Use the product ID as file name (e.g., `692014283130.json`)
+- **Content**: The complete extraction result object (same structure as the JS extraction script returns)
+- **Add metadata**: Include `_scrapedAt` (ISO timestamp) and `_sourceUrl` (the URL used)
+
+Example structure:
+```json
+{
+  "_version": "complete",
+  "_scrapedAt": "2025-02-16T12:00:00Z",
+  "_sourceUrl": "https://detail.tmall.com/item.htm?id=692014283130&mi_id=...",
+  "title": "...",
+  "productId": "692014283130",
+  "images": ["..."],
+  "currentPrice": "1159",
+  "parameters": [{"name": "...", "value": "..."}],
+  "specifications": [...],
+  "reviews": [...],
+  "shop": {...},
+  "shipping": {...},
+  "guarantees": [...]
+}
+```
+
+If the file already exists, overwrite it with fresh data.
+
+### Present to User
+
+Also display a summary in the conversation:
 
 ```
 ## Product: [Title]
@@ -384,6 +417,7 @@ Present results as structured data:
 - Product ID: [id]
 - Shipping: [time], [fee], from [location]
 - Guarantees: [list]
+- Saved to: taobao-products/[id].json
 
 ### Images
 - Gallery: [N] images
