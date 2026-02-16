@@ -1,5 +1,5 @@
 # Taobao Product Scraper Command
-# v1.0 - Dynamic scraping via Chrome DevTools MCP
+# v1.1 - Dynamic scraping via Chrome DevTools MCP with per-plugin browser isolation
 ---
 description: Scrape Taobao/Tmall product data using Chrome DevTools MCP. Handles login, navigation, and intelligent data extraction with A/B test detection.
 ---
@@ -16,6 +16,23 @@ Read the loaded skill carefully — it contains all Taobao page structure knowle
 
 ---
 
+## Prerequisites: Chrome DevTools MCP
+
+This plugin bundles its own Chrome DevTools MCP configuration via `.mcp.json` with an isolated browser profile at `/tmp/taobao-skill-chrome-profile`. This means:
+
+- Each plugin gets its own Chrome instance — no conflicts with other Claude Code sessions
+- Taobao login sessions persist across command invocations (same profile directory)
+- No manual Chrome setup required — the MCP server manages the browser lifecycle
+
+**If Chrome DevTools MCP tools are NOT available** (e.g., `mcp__chrome-devtools__list_pages` fails), tell the user:
+
+> Chrome DevTools MCP is not connected. This plugin includes a `.mcp.json` that configures it automatically.
+> Please ensure the plugin is installed via marketplace (`/plugin install taobao-skill@taobao-skill`).
+> If you already have a global `chrome-devtools` MCP configured, you may need to remove it first
+> to avoid conflicts: run `claude mcp remove chrome-devtools` then restart Claude Code.
+
+---
+
 ## Phase 1: Browser Setup
 
 ### 1.1 Check Chrome DevTools connection
@@ -26,16 +43,10 @@ Use mcp__chrome-devtools__list_pages
 
 If connection works → go to Phase 2.
 
-If connection fails → launch Chrome:
+If connection fails with "browser already running" error → the profile is locked by another session. Tell the user:
 
-```bash
-open -na "Google Chrome" --args \
-  --remote-debugging-port=9222 \
-  --user-data-dir=/tmp/taobao-chrome-profile \
-  --no-first-run
-```
-
-Wait 3 seconds, then retry `list_pages`. The `--user-data-dir` flag ensures login sessions persist across runs.
+> Another Chrome instance is using the same profile. Please close other Claude Code sessions using this plugin, or run:
+> `rm /tmp/taobao-skill-chrome-profile/SingletonLock`
 
 ### 1.2 Confirm page is available
 
