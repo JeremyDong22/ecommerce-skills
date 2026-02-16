@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "taobao-skill",
-      "source": ".",
+      "source": "./taobao-scraper",
       "description": "Taobao/Tmall product scraping skill using Chrome DevTools MCP. Dynamically navigates and extracts product data with AI-driven adaptation to page variations."
     }
   ]
