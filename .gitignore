@@ -1,0 +1,5 @@
+# Project-level MCP config (user-specific, not part of plugin)
+.mcp.json
+
+# Claude Code local settings
+.claude/

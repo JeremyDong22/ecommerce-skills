@@ -1,5 +1,5 @@
 # Taobao Product Scraper Command
-# v1.2 - Dynamic scraping via Chrome DevTools MCP (user-managed browser)
+# v1.3 - Dynamic scraping via Chrome DevTools MCP (user-managed browser, project-level MCP)
 ---
 description: Scrape Taobao/Tmall product data using Chrome DevTools MCP. Handles login, navigation, and intelligent data extraction with A/B test detection.
 ---
@@ -18,20 +18,71 @@ Read the loaded skill carefully — it contains all Taobao page structure knowle
 
 ## Prerequisites: Chrome DevTools MCP
 
-This plugin requires Chrome DevTools MCP to be configured on the user's machine. The plugin does NOT bundle its own MCP configuration — the user must set it up independently.
+This plugin requires Chrome DevTools MCP to be configured by the user. The plugin does NOT bundle MCP configuration — users must set it up at the **project level** in their working directory.
 
-**If Chrome DevTools MCP tools are NOT available** (e.g., `list_pages` tool not found), tell the user:
+**If Chrome DevTools MCP tools are NOT available** (e.g., no `list_pages` tool found), tell the user:
 
-> Chrome DevTools MCP is not configured. This plugin requires it to control Chrome for Taobao scraping.
+> Chrome DevTools MCP is not configured. This plugin needs it to control Chrome for Taobao scraping.
 >
-> Quick setup (add to your Claude Code MCP config):
-> ```bash
-> claude mcp add --scope user chrome-devtools -- npx chrome-devtools-mcp@latest --isolated
+> **Setup: Create a `.mcp.json` file in your project root directory:**
+>
+> **Option A — Per-session isolation with shared login (recommended):**
+>
+> Each Claude Code session gets its own Chrome instance, but all copy cookies from a shared base profile.
+> Multiple sessions can run in parallel without conflicts.
+>
+> ```json
+> {
+>   "mcpServers": {
+>     "chrome-devtools": {
+>       "type": "stdio",
+>       "command": "sh",
+>       "args": [
+>         "-c",
+>         "BASE=\"$HOME/.chrome-profiles/taobao\" && mkdir -p \"$BASE\" && PROFILE=$(mktemp -d /tmp/taobao-chrome-XXXXXX) && cp -a \"$BASE/.\" \"$PROFILE/\" 2>/dev/null; exec npx chrome-devtools-mcp@latest --user-data-dir=\"$PROFILE\""
+>       ]
+>     }
+>   }
+> }
 > ```
-> Then restart Claude Code. See https://github.com/anthropics/claude-code/blob/main/plugins/README.md for details.
 >
-> Note: `--isolated` creates a fresh browser per session. If you need persistent Taobao login across sessions,
-> use `--userDataDir=/path/to/profile` instead (but only one Claude Code session can use each profile at a time).
+> First-time setup — log in to Taobao once to create the base profile:
+> ```bash
+> open -na "Google Chrome" --args --user-data-dir="$HOME/.chrome-profiles/taobao" --no-first-run
+> ```
+> Scan QR code to log in, then close Chrome. All future sessions will copy this login state.
+>
+> **Option B — Simple isolated mode (no login persistence):**
+>
+> ```json
+> {
+>   "mcpServers": {
+>     "chrome-devtools": {
+>       "type": "stdio",
+>       "command": "npx",
+>       "args": ["chrome-devtools-mcp@latest", "--isolated"]
+>     }
+>   }
+> }
+> ```
+> Each session gets a fresh browser. You will need to scan QR code every time.
+>
+> **Option C — Single persistent session (no parallel support):**
+>
+> ```json
+> {
+>   "mcpServers": {
+>     "chrome-devtools": {
+>       "type": "stdio",
+>       "command": "npx",
+>       "args": ["chrome-devtools-mcp@latest", "--userDataDir", "/tmp/taobao-chrome-profile"]
+>     }
+>   }
+> }
+> ```
+> Login persists, but only ONE Claude Code session can use Chrome at a time.
+>
+> After creating `.mcp.json`, restart Claude Code.
 
 ---
 
@@ -39,7 +90,7 @@ This plugin requires Chrome DevTools MCP to be configured on the user's machine.
 
 ### 1.1 Check Chrome DevTools connection
 
-Try to call `list_pages` (the tool name may be prefixed, e.g., `mcp__chrome-devtools__list_pages` or `mcp__plugin_taobao-skill_chrome-devtools__list_pages` depending on how the user configured it). Look for any available tool containing `list_pages` in its name.
+Try to call `list_pages` (the tool name may be prefixed, e.g., `mcp__chrome-devtools__list_pages`). Look for any available tool containing `list_pages` in its name.
 
 If connection works → go to Phase 2.
 
@@ -47,7 +98,7 @@ If connection fails with "browser already running" error → the Chrome profile 
 
 > Another Chrome instance is using the same profile directory. Options:
 > 1. Close the other Claude Code session using Chrome
-> 2. Switch to `--isolated` mode for per-session isolation
+> 2. Switch to Option A or B in the Prerequisites section for per-session isolation
 > 3. Manually remove the lock file: `rm /path/to/profile/SingletonLock`
 
 ### 1.2 Confirm page is available
@@ -61,13 +112,13 @@ Use `list_pages` to find an available page. If no pages exist, use `new_page` to
 ### 2.1 Navigate to Taobao
 
 ```
-Use mcp__chrome-devtools__navigate_page to https://www.taobao.com
+Use navigate_page to https://www.taobao.com
 ```
 
 ### 2.2 Check login status
 
 ```
-Use mcp__chrome-devtools__evaluate_script with this function:
+Use evaluate_script with this function:
 ```
 
 ```js
